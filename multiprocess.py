@@ -7,12 +7,9 @@ from itertools import repeat
 def clean_files(files):
     os.remove(files)
 def sync_files(files,src,dest):
-    if files["file"] == None:
-        return
-    for fil in files["file"]:
-        f="{}/{}".format(files["dir"],fil)
-        backup_dir=files["dir"].replace(src,dest)
-        subprocess.call(["rsync","-arq",f,backup_dir])
+    fline="{}/{}".format(files["dir"],files["file"])
+    backup_dir=files["dir"].replace(src,dest)
+    subprocess.call(["rsync","-arq",fline,backup_dir])
 def clean(src,dest):
     filelist=[]
     dirlist=[]
@@ -31,15 +28,17 @@ def clean(src,dest):
     for dirs in dirlist:
         os.rmdir(dirs)
 def sync(src,dest):
-    filelist=[]           
+    filelist=[]
+    dirlist=[]           
     for dirpath,dirs,files in os.walk(src):
-        filelist.append({"dir":dirpath,"file":files})
-    print(filelist)
-    for files in filelist:
-        backup_dir=files["dir"].replace(src,dest)
-        if not os.path.isdir(backup_dir):
-            print(backup_dir)
-            os.mkdir(backup_dir)
+        for d in dirs:
+            dline="{}/{}".format(dirpath,d).replace(src,dest)
+            if not os.path.exists(dline):
+                dirlist.append(dline)
+        for f in files:
+            filelist.append({"dir":dirpath,"file":f})
+    for dirs in dirlist:
+        os.mkdir(dirs)
     p=Pool(len(filelist))
     p.starmap(sync_files, zip(filelist, repeat(src),repeat(dest)))   
 
